@@ -9,6 +9,21 @@ describe("TranscriptStore", () => {
     store = new TranscriptStore();
   });
 
+  test("BUG-102: rejects duplicate grade for the same student and course", () => {
+    const studentID = store.addStudent("Omar");
+    store.addGrade(studentID, "CS360", 88);
+
+    assert.throws(
+      () => store.addGrade(studentID, "cs360", 91),
+      /Grade already exists for course CS360/,
+    );
+    assert.deepEqual(store.changeGrade(studentID, "CS360", 91), {
+      studentID,
+      course: "CS360",
+      grade: 91,
+    });
+  });
+
   test("adds students and returns their transcripts", () => {
     const studentID = store.addStudent("Ada");
 
