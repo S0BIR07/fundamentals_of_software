@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, test } from "node:test";
+import { createAppServer } from "../src/server.js";
 import { TranscriptStore } from "../src/transcriptStore.js";
 
 describe("TranscriptStore", () => {
@@ -22,6 +23,25 @@ describe("TranscriptStore", () => {
       course: "CS360",
       grade: 91,
     });
+  });
+
+  test("BUG-101: removes stored grades when deleting a student and returns 404", async () => {
+    const studentID = store.addStudent("Maya");
+    store.addGrade(studentID, "CS360", 95);
+    store.deleteStudent(studentID);
+
+    assert.equal(store.getGrade(studentID, "CS360"), undefined);
+
+    const server = createAppServer(store);
+    await new Promise((resolve) => server.listen(0, resolve));
+    try {
+      const { port } = server.address();
+      const res = await fetch(`http://127.0.0.1:${port}/transcripts/${studentID}/CS360`);
+      assert.equal(res.status, 404);
+    } finally {
+      server.closeAllConnections?.();
+      server.close();
+    }
   });
 
   test("adds students and returns their transcripts", () => {
