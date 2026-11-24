@@ -10,6 +10,14 @@ describe("TranscriptStore", () => {
     store = new TranscriptStore();
   });
 
+  test("BUG-103: trims whitespace and ignores case in name search while keeping display name", () => {
+    const studentID = store.addStudent("  Grace Lee  ");
+
+    assert.deepEqual(store.getStudentIDs("grace lee"), [studentID]);
+    assert.deepEqual(store.getStudentIDs("  GRACE LEE  "), [studentID]);
+    assert.equal(store.getTranscript(studentID).student.studentName, "Grace Lee");
+  });
+
   test("BUG-102: rejects duplicate grade for the same student and course", () => {
     const studentID = store.addStudent("Omar");
     store.addGrade(studentID, "CS360", 88);
